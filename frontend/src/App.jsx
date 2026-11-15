@@ -1,7 +1,12 @@
 import { useState } from "react";
+import About from "./About";
+import SampleData from "./SampleData";
+import { applyTheme } from "./theme";
+import { SAMPLE_URL, SAMPLE_NAME } from "./sample";
 
 const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const TYPES = ["TRANSFER", "CASH_OUT", "PAYMENT", "CASH_IN", "DEBIT"];
+const { company } = applyTheme();
 
 const VERDICT = {
   block: { label: "Likely fraud: block", cls: "block" },
@@ -126,6 +131,18 @@ function FileCheck() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function useSample() {
+    setError("");
+    try {
+      const res = await fetch(SAMPLE_URL);
+      if (!res.ok) throw new Error("Sample file not found");
+      const blob = await res.blob();
+      setFile(new File([blob], SAMPLE_NAME, { type: "text/csv" }));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     if (!file) return;
@@ -158,7 +175,9 @@ function FileCheck() {
       </p>
       <form onSubmit={submit} className="upload">
         <input type="file" accept=".csv,.parquet" onChange={(e) => setFile(e.target.files[0])} />
+        <button type="button" className="secondary" onClick={useSample}>Use sample file</button>
         <button type="submit" disabled={!file || loading}>{loading ? "Analysing..." : "Analyse file"}</button>
+        {file && <span className="hint">Selected: {file.name}</span>}
       </form>
 
       {error && <p className="error">{error}</p>}
@@ -197,32 +216,52 @@ function FileCheck() {
               </tbody>
             </table>
           </div>
-          {data.flagged.length > 100 && <p className="hint">Showing the first 100 here. Download the CSV for all of them.</p>}
+          {data.flagged.length > 100 && (
+            <p className="hint">Showing the first 100 here. Download the CSV for all of them.</p>
+          )}
         </>
       )}
     </section>
   );
 }
 
+const TABS = [
+  ["about", "About"],
+  ["single", "Check one transaction"],
+  ["file", "Analyse a file"],
+  ["sample", "Sample data"],
+];
+
 export default function App() {
-  const [tab, setTab] = useState("single");
+  const [tab, setTab] = useState("about");
   return (
-    <div className="page">
-      <header>
-        <h1>Transaction Fraud Checker</h1>
-        <p className="sub">
-          XGBoost model trained on simulated PaySim data. Demo only, not for real financial decisions.
-        </p>
+    <>
+      <header className="hero">
+        <div className="wrap">
+          {company && <span className="badge">Prepared for {company}</span>}
+          <h1>Transaction Fraud Checker</h1>
+          <p>Machine-learning fraud detection: approve, review or block a transaction in milliseconds.</p>
+        </div>
       </header>
-      <nav className="tabs">
-        <button className={tab === "single" ? "active" : ""} onClick={() => setTab("single")}>
-          Check one transaction
-        </button>
-        <button className={tab === "file" ? "active" : ""} onClick={() => setTab("file")}>
-          Analyse a file
-        </button>
-      </nav>
-      {tab === "single" ? <SingleCheck /> : <FileCheck />}
-    </div>
+
+      <main className="wrap">
+        <nav className="tabs">
+          {TABS.map(([id, label]) => (
+            <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        {tab === "about" && <About go={setTab} />}
+        {tab === "single" && <SingleCheck />}
+        {tab === "file" && <FileCheck />}
+        {tab === "sample" && <SampleData />}
+      </main>
+
+      <footer>
+        Built by Bishesh Pokharel · XGBoost + FastAPI + React · trained on simulated PaySim data
+      </footer>
+    </>
   );
 }
