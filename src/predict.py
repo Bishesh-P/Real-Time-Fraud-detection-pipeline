@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import numpy as np
 
 
 import pandas as pd
@@ -33,3 +34,16 @@ def predict_one(tx: dict) -> dict:
     else:
         prob = 0.0
     return {"fraud_probability": round(prob, 6), "decision": decide(prob)}
+
+def predict_batch(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    prob = np.zeros(len(out))
+    mask = out["type"].isin(["TRANSFER", "CASH_OUT"]).to_numpy()
+    if mask.any():
+        X = build_features(out.loc[mask])
+        prob[mask] = _model.predict_proba(X)[:, 1]
+    out["fraud_probability"] = prob.round(6)
+    out["decision"] = np.select(
+        [prob >= BLOCK_T, prob >= REVIEW_T], ["block", "review"], default="approve"
+    )
+    return out
