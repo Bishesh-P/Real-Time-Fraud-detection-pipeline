@@ -1,0 +1,32 @@
+:root { font-family: system-ui, sans-serif; line-height: 1.5; color-scheme: light dark; }
+body { margin: 0; }
+.page { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { margin: 0 0 4px; }
+.sub { margin: 0 0 20px; opacity: 0.7; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tabs button { padding: 8px 14px; border: 1px solid #8884; background: transparent; color: inherit; border-radius: 8px; cursor: pointer; }
+.tabs button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+.card { border: 1px solid #8884; border-radius: 12px; padding: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: end; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+input, select { padding: 8px; border: 1px solid #8886; border-radius: 6px; font-size: 15px; background: transparent; color: inherit; }
+button { padding: 9px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-size: 15px; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: transparent; border: 1px solid #8886; color: inherit; }
+.upload { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.error { color: #dc2626; }
+.hint { font-size: 13px; opacity: 0.7; }
+.verdict { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding: 14px 16px; border-radius: 10px; border: 2px solid; }
+.verdict strong { font-size: 18px; }
+.block { border-color: #dc2626; background: #dc262614; }
+.review { border-color: #d97706; background: #d9770614; }
+.approve { border-color: #16a34a; background: #16a34a14; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0; }
+.stat { display: flex; flex-direction: column; padding: 10px 14px; border: 1px solid #8884; border-radius: 10px; }
+.stat span { font-size: 13px; opacity: 0.75; }
+.stat strong { font-size: 22px; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #8883; white-space: nowrap; }
+code { background: #8882; padding: 1px 5px; border-radius: 4px; }
