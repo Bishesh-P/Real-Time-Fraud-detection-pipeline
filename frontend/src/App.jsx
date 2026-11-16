@@ -1,266 +1,107 @@
-import { useState } from "react";
-import About from "./About";
-import SampleData from "./SampleData";
+import QuickCheck from "./QuickCheck";
+import FileAnalyzer from "./FileAnalyzer";
+import { HowItWorks, Results, Limits, SampleData } from "./Sections";
 import { applyTheme } from "./theme";
-import { SAMPLE_URL, SAMPLE_NAME } from "./sample";
 
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-const TYPES = ["TRANSFER", "CASH_OUT", "PAYMENT", "CASH_IN", "DEBIT"];
 const { company } = applyTheme();
+const REPO = "https://github.com/Bishesh-P/Real-Time-Fraud-detection-pipeline";
 
-const VERDICT = {
-  block: { label: "Likely fraud: block", cls: "block" },
-  review: { label: "Needs review", cls: "review" },
-  approve: { label: "Looks legitimate", cls: "approve" },
-};
-
-function errorText(data, fallback) {
-  const d = data?.detail;
-  if (!d) return fallback;
-  if (typeof d === "string") return d;
-  if (Array.isArray(d))
-    return d.map((e) => `${(e.loc || []).slice(1).join(".")}: ${e.msg}`).join("; ");
-  return fallback;
-}
-
-function SingleCheck() {
-  const [form, setForm] = useState({
-    step: 1, type: "TRANSFER", amount: 181, oldbalanceOrg: 181, oldbalanceDest: 0,
-  });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
-  async function submit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setResult(null);
-    try {
-      const res = await fetch(`${API}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          step: Number(form.step),
-          type: form.type,
-          amount: Number(form.amount),
-          oldbalanceOrg: Number(form.oldbalanceOrg),
-          oldbalanceDest: Number(form.oldbalanceDest),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(errorText(data, "Request failed"));
-      setResult(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+function Logo() {
   return (
-    <section className="card">
-      <form onSubmit={submit} className="grid">
-        <label>
-          Transaction type
-          <select value={form.type} onChange={set("type")}>
-            {TYPES.map((t) => <option key={t}>{t}</option>)}
-          </select>
-        </label>
-        <label>
-          Time step (hour)
-          <input type="number" min="1" required value={form.step} onChange={set("step")} />
-        </label>
-        <label>
-          Amount
-          <input type="number" min="0" step="any" required value={form.amount} onChange={set("amount")} />
-        </label>
-        <label>
-          Sender balance before
-          <input type="number" min="0" step="any" required value={form.oldbalanceOrg} onChange={set("oldbalanceOrg")} />
-        </label>
-        <label>
-          Receiver balance before
-          <input type="number" min="0" step="any" required value={form.oldbalanceDest} onChange={set("oldbalanceDest")} />
-        </label>
-        <button type="submit" disabled={loading}>{loading ? "Checking..." : "Check transaction"}</button>
-      </form>
-
-      {error && <p className="error">{error}</p>}
-      {result && (
-        <div className={`verdict ${VERDICT[result.decision].cls}`}>
-          <strong>{VERDICT[result.decision].label}</strong>
-          <span>Fraud probability: {(result.fraud_probability * 100).toFixed(2)}%</span>
-          <small>Scored in {result.latency_ms} ms</small>
-        </div>
-      )}
-      <p className="hint">
-        Try: TRANSFER, amount 181, sender balance 181, receiver balance 0 (looks like fraud).
-      </p>
-    </section>
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+      <rect width="28" height="28" rx="8" style={{ fill: "var(--brand)" }} />
+      <path
+        d="M5 15h5l3-7 4 12 3-5h3"
+        fill="none"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ stroke: "var(--on-brand)" }}
+      />
+    </svg>
   );
 }
 
-function downloadCsv(rows) {
-  if (!rows.length) return;
-  const cols = Object.keys(rows[0]);
-  const lines = rows.map((r) => cols.map((c) => JSON.stringify(r[c] ?? "")).join(","));
-  const csv = [cols.join(","), ...lines].join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "flagged_transactions.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function Stat({ label, value, cls }) {
-  return (
-    <div className={`stat ${cls || ""}`}>
-      <span>{label}</span>
-      <strong>{Number(value).toLocaleString()}</strong>
-    </div>
-  );
-}
-
-function FileCheck() {
-  const [file, setFile] = useState(null);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function useSample() {
-    setError("");
-    try {
-      const res = await fetch(SAMPLE_URL);
-      if (!res.ok) throw new Error("Sample file not found");
-      const blob = await res.blob();
-      setFile(new File([blob], SAMPLE_NAME, { type: "text/csv" }));
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function submit(e) {
-    e.preventDefault();
-    if (!file) return;
-    setLoading(true);
-    setError("");
-    setData(null);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch(`${API}/predict/batch`, { method: "POST", body });
-      const json = await res.json();
-      if (!res.ok) throw new Error(errorText(json, "Upload failed"));
-      setData(json);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const s = data?.summary;
-  const cols = data?.flagged?.length ? Object.keys(data.flagged[0]) : [];
-
-  return (
-    <section className="card">
-      <p>
-        Upload a CSV or Parquet file with columns:{" "}
-        <code>step, type, amount, oldbalanceOrg, oldbalanceDest</code>. If it also has an{" "}
-        <code>isFraud</code> column, the results are checked against it.
-      </p>
-      <form onSubmit={submit} className="upload">
-        <input type="file" accept=".csv,.parquet" onChange={(e) => setFile(e.target.files[0])} />
-        <button type="button" className="secondary" onClick={useSample}>Use sample file</button>
-        <button type="submit" disabled={!file || loading}>{loading ? "Analysing..." : "Analyse file"}</button>
-        {file && <span className="hint">Selected: {file.name}</span>}
-      </form>
-
-      {error && <p className="error">{error}</p>}
-
-      {s && (
-        <>
-          {data.truncated && <p className="hint">Large file: only the first rows were analysed.</p>}
-          <div className="stats">
-            <Stat label="Transactions" value={s.rows} />
-            <Stat label="Blocked" value={s.block} cls="block" />
-            <Stat label="Review" value={s.review} cls="review" />
-            <Stat label="Approved" value={s.approve} cls="approve" />
-          </div>
-
-          {s.actual_fraud !== undefined && (
-            <div className="stats">
-              <Stat label="Actual fraud in file" value={s.actual_fraud} />
-              <Stat label="Fraud caught" value={s.fraud_caught} cls="approve" />
-              <Stat label="False alarms" value={s.false_alarms} cls="review" />
-            </div>
-          )}
-
-          <div className="row">
-            <h3>Flagged transactions (top {data.flagged.length})</h3>
-            {data.flagged.length > 0 && (
-              <button className="secondary" onClick={() => downloadCsv(data.flagged)}>Download CSV</button>
-            )}
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
-              <tbody>
-                {data.flagged.slice(0, 100).map((r, i) => (
-                  <tr key={i}>{cols.map((c) => <td key={c}>{String(r[c])}</td>)}</tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {data.flagged.length > 100 && (
-            <p className="hint">Showing the first 100 here. Download the CSV for all of them.</p>
-          )}
-        </>
-      )}
-    </section>
-  );
-}
-
-const TABS = [
-  ["about", "About"],
-  ["single", "Check one transaction"],
-  ["file", "Analyse a file"],
-  ["sample", "Sample data"],
+const FACTS = [
+  ["0.9998", "PR-AUC on later hours the model never saw"],
+  ["About 8 ms", "to score one transaction"],
+  ["3 outcomes", "approve, review or block"],
+  ["6.36M", "simulated transactions in the dataset"],
 ];
 
 export default function App() {
-  const [tab, setTab] = useState("about");
   return (
     <>
-      <header className="hero">
+      <header className="nav">
         <div className="wrap">
-          {company && <span className="badge">Prepared for {company}</span>}
-          <h1>Transaction Fraud Checker</h1>
-          <p>Machine-learning fraud detection: approve, review or block a transaction in milliseconds.</p>
+          <a className="brand" href="#top"><Logo />Fraud Checker</a>
+          <nav className="nav-links" aria-label="Main">
+            <a className="hide-sm" href="#file">Analyse a file</a>
+            <a className="hide-sm" href="#how">How it works</a>
+            <a className="hide-sm" href="#results">Results</a>
+            <a className="hide-sm" href="#limits">Limits</a>
+            <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
+          </nav>
         </div>
       </header>
 
-      <main className="wrap">
-        <nav className="tabs">
-          {TABS.map(([id, label]) => (
-            <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
-              {label}
-            </button>
-          ))}
-        </nav>
+      <main id="top">
+        <section className="hero" id="check">
+          <div className="wrap hero-grid">
+            <div>
+              {company && <span className="pill">Prepared for {company}</span>}
+              <h1>Catch fraud before the money moves.</h1>
+              <p className="lede">
+                Score a transaction in milliseconds, or upload a file and see which transactions to
+                block, review or approve.
+              </p>
+              <div className="hero-actions">
+                <a className="btn" href="#file">Analyse a file</a>
+                <a className="btn btn-ghost" href="#how">How it works</a>
+              </div>
+              <p className="fine">
+                Trained on simulated PaySim data. A portfolio demo, not for real financial decisions.
+              </p>
+            </div>
+            <QuickCheck />
+          </div>
+        </section>
 
-        {tab === "about" && <About go={setTab} />}
-        {tab === "single" && <SingleCheck />}
-        {tab === "file" && <FileCheck />}
-        {tab === "sample" && <SampleData />}
+        <section className="facts" aria-label="Key facts">
+          <div className="wrap">
+            {FACTS.map(([big, label]) => (
+              <div className="fact" key={label}>
+                <b>{big}</b>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="section" id="file">
+          <div className="wrap">
+            <div className="section-head">
+              <h2>Analyse a whole file</h2>
+              <p>
+                Upload transactions as CSV or Parquet. You get a summary, the flagged transactions,
+                and a download.
+              </p>
+            </div>
+            <FileAnalyzer />
+          </div>
+        </section>
+
+        <HowItWorks />
+        <Results />
+        <Limits />
+        <SampleData />
       </main>
 
-      <footer>
-        Built by Bishesh Pokharel · XGBoost + FastAPI + React · trained on simulated PaySim data
+      <footer className="footer">
+        <div className="wrap">
+          <span>Built by Bishesh Pokharel with XGBoost, FastAPI and React.</span>
+          <a href={REPO} target="_blank" rel="noreferrer">Source code on GitHub</a>
+        </div>
       </footer>
     </>
   );
