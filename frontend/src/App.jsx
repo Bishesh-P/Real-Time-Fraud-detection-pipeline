@@ -1,5 +1,6 @@
 import QuickCheck from "./QuickCheck";
 import FileAnalyzer from "./FileAnalyzer";
+import Marquee from "./Marquee";
 import { HowItWorks, Results, Limits, SampleData } from "./Sections";
 import { applyTheme } from "./theme";
 
@@ -8,7 +9,7 @@ const REPO = "https://github.com/Bishesh-P/Real-Time-Fraud-detection-pipeline";
 
 function Logo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 28 28" aria-hidden="true">
       <rect width="28" height="28" rx="8" style={{ fill: "var(--brand)" }} />
       <path
         d="M5 15h5l3-7 4 12 3-5h3"
@@ -40,7 +41,8 @@ export default function App() {
             <a className="hide-sm" href="#how">How it works</a>
             <a className="hide-sm" href="#results">Results</a>
             <a className="hide-sm" href="#limits">Limits</a>
-            <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
+            <a className="hide-sm" href={REPO} target="_blank" rel="noreferrer">GitHub</a>
+            <a className="btn btn-sm" href="#check">Try it</a>
           </nav>
         </div>
       </header>
@@ -69,14 +71,18 @@ export default function App() {
 
         <section className="facts" aria-label="Key facts">
           <div className="wrap">
-            {FACTS.map(([big, label]) => (
-              <div className="fact" key={label}>
-                <b>{big}</b>
-                <span>{label}</span>
-              </div>
-            ))}
+            <div className="facts-card">
+              {FACTS.map(([big, label]) => (
+                <div className="fact" key={label}>
+                  <b>{big}</b>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+
+        <Marquee />
 
         <section className="section" id="file">
           <div className="wrap">
@@ -95,6 +101,21 @@ export default function App() {
         <Results />
         <Limits />
         <SampleData />
+
+        <section className="cta">
+          <div className="wrap">
+            <div className="cta-card">
+              <div>
+                <h2>See it score a transaction.</h2>
+                <p>Run an example in the demo card, or upload your own file.</p>
+              </div>
+              <div className="cta-actions">
+                <a className="btn" href="#check">Check a transaction</a>
+                <a className="btn btn-ghost" href={REPO} target="_blank" rel="noreferrer">View the code</a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="footer">

@@ -2,7 +2,7 @@
 
 A machine learning system that looks at a transaction and decides, in milliseconds, whether to **approve** it, send it for **review**, or **block** it. It includes a trained model, a scoring API, a web app, and a Kafka streaming pipeline.
 
-**Live demo:** _add your link here after deploying_
+
 **Code:** https://github.com/Bishesh-P/Real-Time-Fraud-detection-pipeline
 
 > **Important:** the model is trained on **PaySim**, a *simulated* dataset. It is a portfolio project and must not be used for real financial decisions. See [Limitations](#limitations).

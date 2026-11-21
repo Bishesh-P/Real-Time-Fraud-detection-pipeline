@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { API, THRESHOLDS, SCORED_TYPES, errorText, formatProb } from "./api";
 
 const TYPES = ["TRANSFER", "CASH_OUT", "PAYMENT", "CASH_IN", "DEBIT"];
@@ -20,6 +20,15 @@ export default function QuickCheck() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("checking");
+
+useEffect(() => {
+  const ctrl = new AbortController();
+  fetch(`${API}/health`, { signal: ctrl.signal })
+    .then((r) => setStatus(r.ok ? "online" : "offline"))
+    .catch((e) => { if (e.name !== "AbortError") setStatus("offline"); });
+  return () => ctrl.abort();
+}, []);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -69,7 +78,12 @@ export default function QuickCheck() {
 
   return (
     <div className="tool">
-      <h2>Check a transaction</h2>
+      <div className="tool-head">
+  <h2>Check a transaction</h2>
+  <span className={`status ${status}`}>
+    {status === "online" ? "Scoring server online" : status === "offline" ? "Server offline" : "Connecting..."}
+  </span>
+</div>
       <p className="sub">Pick an example or enter your own values.</p>
 
       <div className="chips">

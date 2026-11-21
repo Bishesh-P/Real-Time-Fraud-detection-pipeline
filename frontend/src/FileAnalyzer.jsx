@@ -88,6 +88,11 @@ export default function FileAnalyzer() {
           className="sr-only"
           onChange={(e) => pick(e.target.files[0])}
         />
+        <svg className="drop-icon" width="36" height="36" viewBox="0 0 24 24" fill="none"
+     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <path d="M12 16V4M7 9l5-5 5 5" />
+  <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+</svg>
         <strong>{file ? file.name : "Drop a CSV or Parquet file here"}</strong>
         <span>
           {file ? `${Math.max(1, Math.round(file.size / 1024))} KB, ready to analyse` : "or click to choose one"}
